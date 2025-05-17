@@ -1,5 +1,7 @@
 package com.example.sa4
 
+import android.location.Geocoder
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -7,15 +9,27 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 
 @Composable
-fun ListScreen(viewModel: EventViewModel) {
+fun ListScreen(viewModel: EventViewModel, navController: NavController) {
     val events by viewModel.allEvents.collectAsState()
     val context = LocalContext.current
 
-    Column(Modifier.padding(16.dp)) {
+    Column(
+        Modifier
+            .padding(16.dp)
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onDoubleTap = {
+                        navController.navigate("calc")
+                    }
+                )
+            }
+    ) {
         Text("Event List")
         events.forEach { event ->
             var isChecked by remember { mutableStateOf(false) }
@@ -42,8 +56,11 @@ fun ListScreen(viewModel: EventViewModel) {
 
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                             IconButton(onClick = {
-                                val lat = newLatitude.toDoubleOrNull() ?: event.latitude
-                                val lon = newLongitude.toDoubleOrNull() ?: event.longitude
+                                val geocoder = Geocoder(context)
+                                val location = geocoder.getFromLocationName(newAddress, 1)?.firstOrNull()
+                                val lat = location?.latitude ?: event.latitude
+                                val lon = location?.longitude ?: event.longitude
+
                                 viewModel.edit(
                                     event,
                                     newName,

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Place
@@ -50,14 +51,18 @@ fun MainScaffold() {
         NotificationHelper.createChannel(context)
     }
 
-
-    val items = listOf("list", "add", "map")
+    // Added "calc" route
+    val items = listOf("list", "add", "map", "calc")
 
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
             ModalDrawerSheet {
-                Text("Navigation", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.titleMedium)
+                Text(
+                    "Navigation",
+                    modifier = Modifier.padding(16.dp),
+                    style = MaterialTheme.typography.titleMedium
+                )
                 items.forEach { route ->
                     TextButton(onClick = {
                         navController.navigate(route) {
@@ -88,11 +93,13 @@ fun MainScaffold() {
                         NavigationBarItem(
                             selected = navController.currentBackStackEntryAsState().value?.destination?.route == screen,
                             onClick = { navController.navigate(screen) },
+                            // Added case for "calc"
                             icon = {
                                 when (screen) {
                                     "list" -> Icon(Icons.AutoMirrored.Filled.List, contentDescription = "List")
-                                    "add" -> Icon(Icons.Default.Add, contentDescription = "Add")
-                                    "map" -> Icon(Icons.Default.Place, contentDescription = "Map")
+                                    "add"  -> Icon(Icons.Default.Add, contentDescription = "Add")
+                                    "map"  -> Icon(Icons.Default.Place, contentDescription = "Map")
+                                    "calc"-> Icon(Icons.Default.Calculate, contentDescription = "Calc")
                                 }
                             },
                             label = { Text(screen.replaceFirstChar { it.uppercase() }) }
@@ -101,18 +108,20 @@ fun MainScaffold() {
                 }
             }
         ) { innerPadding ->
-            val eventViewModel: EventViewModel = viewModel(EventViewModel::class.java)
+            val eventViewModel: EventViewModel = viewModel()
 
-            NavHost(navController, startDestination = "list", Modifier.padding(innerPadding)) {
-                composable("list") { ListScreen(eventViewModel) }
-                composable("add") { AddEditScreen(viewModel = eventViewModel, onEventSaved = { navController.navigate("list") }) }
-                composable("map") {
-                    MapScreen(viewModel = eventViewModel)
+            NavHost(
+                navController,
+                startDestination = "list",
+                Modifier.padding(innerPadding)
+            ) {
+                composable("list") {
+                    ListScreen(viewModel = eventViewModel, navController = navController)
                 }
-
+                composable("add")  { AddEditScreen(viewModel = eventViewModel, onEventSaved = { navController.navigate("list") }) }
+                composable("map")  { MapScreen(viewModel = eventViewModel) }
+                composable("calc") { CalculatorScreen() }
             }
-
-
         }
     }
 }
